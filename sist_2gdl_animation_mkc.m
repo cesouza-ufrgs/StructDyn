@@ -367,7 +367,7 @@ endfunction
 %------------------------------------------------------------------------------|
 function dydx = df_2gdl_AB(t,y,A,B,omega)
 
-force = cos(omega * t *  t);
+force = cos(omega *  t);
 
 dydx = zeros(4,1);      
       
