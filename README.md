@@ -27,7 +27,7 @@ Os códigos estão na pasta [Python][PythonCodes].
 
 
 [UFRGS]: www.ufrgs.br
-[OctaveCodes]: https://github.com/cesouza-ufrgs/StrucDyn/Octave
-[PythonCodes]: https://github.com/cesouza-ufrgs/StrucDyn/Python
+[OctaveCodes]: Octave/
+[PythonCodes]: Python/
 
 ![UFRGS](Util/logo_UFRGS_escuro.png)
