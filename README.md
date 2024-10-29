@@ -15,13 +15,15 @@ Estão disponíveis códigos em Matlab e Python.
 # Octave
 
 O Octave é a versão aberta do Matlab. Pode ser encontrado em https://octave.org/.
-Os códigos estão na pasta [OctaveCodes]Octave.
+
+Os códigos estão na pasta [Octave][OctaveCodes].
 
 
 # Python
 
 Python é uma linguagem de programação com amplo uso em Engenharia.
 
+Os códigos estão na pasta [Python][PythonCodes].
 
 
 [UFRGS]: www.ufrgs.br
