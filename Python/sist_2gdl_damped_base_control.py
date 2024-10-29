@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-'''
-Este e um script para simular um sistema de 2 GDL, sujeito a movimento de base.
 
-'''
-
-
-import matplotlib.pyplot as plt
 
 import numpy as np
+import matplotlib.pyplot as plt
+import random
+# from numpy import matmul
+
 from numpy.linalg import inv, eig
-from numpy import pi, sin, cos
+
+from math import pi, sin, cos
 
 from scipy.integrate import odeint
 
@@ -17,41 +16,41 @@ from numpy.fft import fftn
 
 
 def basemove(t,Y,omega):
-   
-    ti=2
-    tf=5
-    
-    if t>ti and  t <= tf:    
-        y=Y*sin(omega*(t-ti))
-        
-        dydt = omega*Y*cos(omega*(t-ti))
-        
-    else:
-        y=0
-        dydt=0
-    
-    return y,dydt
+           
+    #print(rr)
+    #y=0.001*(random.random()-.5)
+    y=0
+    if (t>1) and (t<5):
+        y=y+Y*sin(omega*t) 
+        #y=Y  
+            
+    return y
 
 # defines the base movement    
 def compQ(t, k1, c1, Y, omega):
     
-    y,dydt= basemove(t,Y,omega)
+    #rr = random.random()-.5
+    
+    Q = 0.0
+    
+    if (t>1.) and (t<5.):
         
-    Q = k1*y #+ c1*dydt
+        Q = k1*Y*sin(omega*t) + c1*omega*Y*cos(omega*t) 
+        #Q = k1*Y  
     
     return Q
  
     
 # function that returns dy/dt
-def compute_dqdt(q,t, A,B,u,k1,c1,Y,omega):
+def compute_dqdt(q,t, A,B,u,k1,c1,Y,omega,Kg):
    
     dqdt = np.empty((4,))
         
+    u[0] = compQ(t, k1, c1, Y, omega)  - Kg*q[3] 
+    u[1] = -Kg*q[3]
     
-    
-    u[0] = compQ(t, k1, c1, Y, omega)  
         
-    dqdt = np.dot(A , q)+np.dot(B , u)
+    dqdt = np.dot(A , q) + np.dot(B , u)
     
     return dqdt
 
@@ -69,25 +68,24 @@ def ffthalfamp(t, y, T, N):
     freq = np.linspace(0.0, 1.0 /(2.0*T) , N//2) # get freq axis
     
     return freq, amp
-
-
-#-----------------------------------
-
    
 #Constantes do problema
-m =5
-m1=m
-m2=10*m
-k1=4000
-k2=8000
+# preument
+m1=36
+m2=240
+k1=160000
+k2=16000
 
 # entrada do sistema - movimento de base
 Y = 0.05
-f = 4
+f = 10
 omega = 2*pi*f
 
-c1 =  0
-c2 = 100
+c1 = 000
+c2 = 980
+
+# control gain
+Kg = 100
 
 #Condições iniciais
 x10=0.0
@@ -104,8 +102,8 @@ K=np.array([[k1+k2,   -k2],
             [-k2, k2]])
 
 
-C=np.array([[c1, 0    ],
-            [0, c2]])
+C=np.array([[c1+c2+Kg, -c2],
+            [-c2+Kg, c2]])
 
 print('matrix M\n',M)
 print('matrix K\n',K)
@@ -146,13 +144,9 @@ print('autovetores normalizados\n')
 print(v1)
 print(v2)
 
-
-
-
-
-#----------------------------------------
-# simulando no espaço de estados
-
+'''   
+simulando no espaço de estados
+'''
 # cria o modelo no espaco de estados
 
 A=np.zeros((2*ngl,2*ngl))
@@ -181,55 +175,60 @@ print('u',u)
 # time integration with runge kutta
 
 # time points
-N = 2048
+N = 2**11
 T = 0.005
 t = np.linspace(0.0, N*T, N)
 
-q = odeint(compute_dqdt,q0,t, args=(A,B,u,k1,c1,Y,omega, ))
+q = odeint(compute_dqdt,q0,t, args=(A,B,u,k1,c1,Y,omega, 0.,))
 
+qc = odeint(compute_dqdt,q0,t, args=(A,B,u,k1,c1,Y,omega, Kg,))
+
+
+yv = t*0
+
+i=0
+for tt in t:    
+    yv[i] = basemove(tt,Y,omega)        
+    i+=1
 
 #----------------------------------------
 #----------------------------------------
-# plotando tudo 
-fig, axs = plt.subplots(3)
+# plot 
+fig, axs = plt.subplots(3,figsize=(8, 8))
 
 axs[0].title.set_text('time signal')
-axs[0].plot(t,q[:,1])
+axs[0].plot(t,q[:,1], label='$q_s$(t)')
+axs[0].plot(t,qc[:,1],'r', label='$q_s$ c(t)')
 #axs[0].plot(t,q[:,1])
-axs[0].set(ylabel='$x_2$[m/s]')
+axs[0].set(ylabel='$x_2$[m]')
 
-axs[1].plot(t,q[:,0])
+leg = axs[0].legend();
+
+axs[1].plot(t,q[:,0], label='$q_r$(t)')
+axs[1].plot(t,qc[:,0],'r', label='$q_r$ c(t)')
 #axs[1].plot(t,q[:,3])
-axs[1].set(ylabel='$x_1$[m/s]')
+axs[1].set(ylabel='$x_1$[m]')
 
+leg = axs[1].legend();
 
 #----------------------------------------
 #-- plot the y function
 #----------------------------------------
-funy = np.vectorize(basemove,otypes=[float,float])
-
-yt=funy(t,Y,omega)
-
-print('vectorized')
-print(yt)
-print(yt[0])
-print(yt[1])
+#yt = np.vectorize(basemove)
+#axs[2].plot(t, yt(t,Y,omega))
+axs[2].plot(t, yv, label='y(t)')
+axs[2].set(ylabel='y(t) [m]')
+axs[2].set(xlabel='time [s]')
 
 
-axs[2].plot(t,yt[0] )
-axs[2].set(ylabel='y(t) [m/s]')
-axs[2].set(xlabel='time')
-
-
-plt.tight_layout()
-
-
+plt.savefig('plots_control.png')
 #----- FFT
-freq, yf  = ffthalfamp(t, yt[0], T, N)
+#freq, yf  = ffthalfamp(t, yt(t,Y,omega), T, N)
+freq, yf  = ffthalfamp(t, yv, T, N)
 freq, yf0 = ffthalfamp(t, q[:,0], T, N)
 freq, yf1 = ffthalfamp(t, q[:,1], T, N)
 
-fig2, axs2 = plt.subplots(3)
+fig2, axs2 = plt.subplots(3,figsize=(8, 5))
 axs2[0].title.set_text('frequency domain')
 axs2[0].plot(freq, yf1)
 axs2[0].set(ylabel='$A_2(f)$[m/s]')
@@ -239,9 +238,7 @@ axs2[2].plot(freq, yf)
 axs2[2].set(ylabel='$A_f(f)$[m/s]')
 axs2[2].set(xlabel='f [Hz]')
 
-plt.tight_layout()
 plt.show()
-
 
 #plt.plot(T, x1h(T)+x1p(T), label='xt(t)')
 #plt.plot(T, x2h(T)+x2p(T), label='θt(t)')
