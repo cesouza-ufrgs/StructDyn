@@ -1,0 +1,12 @@
+[workspace]
+restore_data_on_startup = True
+save_data_on_exit = True
+save_history = True
+save_non_project_files = False
+project_type = 'empty-project-type'
+recent_files = ['../../../Dropbox/UFRGS/ENG03084/ESP32/date06_adpt_241105.py', '../../../Dropbox/UFRGS/ENG03084/ESP32/process_arduino_serial_241105.py', 'Python/sist_2gdl_half_car.py']
+
+[main]
+version = 0.2.0
+recent_files = []
+
